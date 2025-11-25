@@ -28,8 +28,6 @@ export class ImprovedAuth {
         fs.mkdirSync(this.keyDirPath, { recursive: true })
         this.cache = new NodeCache({ stdTTL: 1800, checkperiod: 600, useClones: false })
         this.creds = this.#loadAuth(this.credsPath) || initAuthCreds()
-
-        this.#cleanupOnExit()
     }
 
     get keysDir() { return this.keyDirPath }
@@ -136,11 +134,5 @@ export class ImprovedAuth {
             creds: this.creds,
             keys: this.keys
         }
-    }
-    #cleanupOnExit() {
-        const cleanup = () => this.cache.flushAll()
-        process.on('exit', cleanup)
-        process.on('SIGINT', cleanup)
-        process.on('SIGTERM', cleanup)
     }
 }

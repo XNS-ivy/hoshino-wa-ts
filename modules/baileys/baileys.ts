@@ -8,10 +8,12 @@ import systemConfig from '@configs/system.json'
 import QRcode from 'qrcode'
 import type { Boom } from '@hapi/boom'
 import fs from 'fs'
+import { MessageParse, type IMessageParse } from './handlers/message-parse'
 
 export default class Socket {
     public sock: WASocket | null
     private logger: ILogger
+    private parseChat: IMessageParse
     authPath: string | null
     auth: ImprovedAuth | null
     saveCreds: () => void
@@ -21,7 +23,8 @@ export default class Socket {
         this.authPath = null
         this.auth = null
         this.saveCreds = async () => { }
-        this.logger = new Logger()
+        this.logger! = new Logger()
+        this.parseChat! = new MessageParse()
     }
 
     async init(authFolderName: string) {
@@ -61,6 +64,20 @@ export default class Socket {
             if (connection) this.logger.log(`[Connection] ${connection}`, 'system')
             if (qr) console.log(await QRcode.toString(qr, { small: true, type: 'terminal' }))
             if (connection == 'close' && lastDisconnect) await this.#handleSocketDisconnect(lastDisconnect)
+        })
+        this.sock.ev.on('messages.upsert', async (message) => {
+            const { messages, type } = message
+            if (type == 'notify') {
+                for (const message of messages) {
+                    // this.logger.log('[Event] Got New Notify Message', 'info')
+                    this.parseChat.fetch(message)
+                }
+            } if (type == 'append') {
+                for (const message of messages) {
+                    // this.logger.log('[Event] Got New Appended Message', 'info')
+                    this.parseChat.fetch(message)
+                }
+            }
         })
     }
     // ------ 
