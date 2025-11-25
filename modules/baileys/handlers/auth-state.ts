@@ -19,7 +19,7 @@ export class ImprovedAuth {
     logger: ILogger
     [key: string]: any
 
-    constructor(baseDir: string = './auth') {
+    constructor(baseDir: `./${string}` = './auth') {
         this.logger = new Logger()
         this.baseDir = baseDir
         this.credsPath = path.join(this.baseDir, 'creds.json')
