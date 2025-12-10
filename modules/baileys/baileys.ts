@@ -13,7 +13,7 @@ import { MessageParse, type IMessageParse } from './handlers/message-parse'
 export default class Socket {
     public sock: WASocket | null
     private logger: ILogger
-    private parseChat: IMessageParse
+    private parseChat: MessageParse
     authPath: string | null
     auth: ImprovedAuth | null
     saveCreds: () => void
@@ -23,8 +23,8 @@ export default class Socket {
         this.authPath = null
         this.auth = null
         this.saveCreds = async () => { }
-        this.logger! = new Logger()
-        this.parseChat! = new MessageParse()
+        this.logger = new Logger()
+        this.parseChat = new MessageParse()
     }
 
     async init(authFolderName: string) {
@@ -76,6 +76,7 @@ export default class Socket {
                 for (const message of messages) {
                     // this.logger.log('[Event] Got New Appended Message', 'info')
                     this.parseChat.fetch(message)
+                    
                 }
             }
         })
