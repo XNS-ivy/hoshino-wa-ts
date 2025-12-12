@@ -67,18 +67,19 @@ export default class Socket {
         })
         this.sock.ev.on('messages.upsert', async (message) => {
             const { messages, type } = message
+            let messageOutput = null
             if (type == 'notify') {
                 for (const message of messages) {
-                    // this.logger.log('[Event] Got New Notify Message', 'info')
-                    this.parseChat.fetch(message)
+                    this.logger.log('[Event] Got New Notify Message', 'info')
+                    messageOutput = await this.parseChat.fetch(message)
                 }
             } if (type == 'append') {
                 for (const message of messages) {
-                    // this.logger.log('[Event] Got New Appended Message', 'info')
-                    this.parseChat.fetch(message)
-                    
+                    this.logger.log('[Event] Got New Appended Message', 'info')
+                    messageOutput = await this.parseChat.fetch(message)
                 }
             }
+            // if(messageOutput != null) console.log(messageOutput)
         })
     }
     // ------ 
