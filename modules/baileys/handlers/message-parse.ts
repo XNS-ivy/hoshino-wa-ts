@@ -34,7 +34,15 @@ export class MessageParse {
         const quoted = quotedMessage
             ? await this.quotedMessageFetch(quotedMessage)
             : null
-
+        if (text || caption) {
+            const commandType = text ? 'regular' : 'mediaDownload'
+            const cmd = text.startsWith()
+            const command = {
+                cmd: '',
+                args: [],
+                type: commandType,
+            }
+        }
         return {
             remoteJid,
             lid,
@@ -121,8 +129,6 @@ interface IMessageFetch extends IKeyFetch {
     raw: WAMessage,
     rawQuoted?: proto.IMessage | null,
 }
-
-// Interface IReturnFetch removed; fetch now returns IMessageFetch directly.
 
 interface IQuotedMessage {
     type: string,
