@@ -12,9 +12,9 @@ import { MessageParse } from './handlers/message-parse'
 import command from './handlers/command-handling'
 
 export default class Socket {
-    public sock: WASocket | null
-    private logger: ILogger
-    private parseChat: MessageParse
+    private sock: WASocket | null
+    private logger = new Logger
+    private parseChat = new MessageParse()
     private command = command
     private authPath: string | null
     private auth: ImprovedAuth | null
@@ -25,22 +25,20 @@ export default class Socket {
         this.authPath = null
         this.auth = null
         this.saveCreds = async () => { }
-        this.logger = new Logger()
-        this.parseChat = new MessageParse()
     }
 
     async init(authFolderName: string) {
         this.logger.log('[Socket] Initialize System', 'system')
         this.authPath = authFolderName
         this.auth = new ImprovedAuth(`./${this.authPath!}`)
-        const { sock, saveCreds } = await this.#SocketConfiguration()
+        const { sock, saveCreds } = await this.SocketConfiguration()
         this.sock = sock
         this.saveCreds = saveCreds
-        await this.#socketEvents()
+        await this.socketEvents()
     }
 
 
-    async #SocketConfiguration() {
+    private async SocketConfiguration(): Promise<ISockConfig> {
         this.logger.log('[Socket] Loading Socket Configurations', 'system')
 
         if (!this.auth) throw new Error("Auth not initialized")
@@ -55,7 +53,7 @@ export default class Socket {
         return { sock, saveCreds }
     }
 
-    async #socketEvents() {
+    private async socketEvents(): Promise<void> {
         if (!this.sock) return
         this.sock.ev.on('creds.update', () => {
             this.logger.log('[Creds] Saving Creds', 'system')
@@ -65,7 +63,7 @@ export default class Socket {
             const { qr, lastDisconnect, connection } = connections
             if (connection) this.logger.log(`[Connection] ${connection}`, 'system')
             if (qr) console.log(await QRcode.toString(qr, { small: true, type: 'terminal' }))
-            if (connection == 'close' && lastDisconnect) await this.#handleSocketDisconnect(lastDisconnect)
+            if (connection == 'close' && lastDisconnect) await this.handleSocketDisconnect(lastDisconnect)
         })
         this.sock.ev.on('messages.upsert', async (message) => {
             const { messages, type } = message
@@ -79,10 +77,10 @@ export default class Socket {
                     messageOutput = await this.parseChat.fetch(message, type)
                 }
             }
-            if(messageOutput != null) {
+            if (messageOutput != null) {
                 this.logger.log(`[Message] Got New ${messageOutput.notifyType} Message`, 'info')
-                if (messageOutput.commandContent != null && this.sock != null){
-                    this.logger.log(`[Command] Executing Cooamnd: ${messageOutput.commandContent.cmd}`, 'system')
+                if (messageOutput.commandContent != null && this.sock != null) {
+                    this.logger.log(`[Commands] Executing Cooamnd: ${messageOutput.commandContent.cmd}`, 'system')
                     this.command.execute(messageOutput, this.sock)
                 }
             }
@@ -90,7 +88,7 @@ export default class Socket {
     }
     // ------ 
 
-    async #handleSocketDisconnect({ error }: ILastDisconnect) {
+    private async handleSocketDisconnect({ error }: ILastDisconnect) {
         const code = (error as Boom<unknown>)?.output?.statusCode
         switch (code) {
             case DisconnectReason.loggedOut:
@@ -120,6 +118,10 @@ export default class Socket {
     }
 }
 
+interface ISockConfig {
+    sock: WASocket,
+    saveCreds: () => void,
+}
 interface ILastDisconnect {
     error?: Boom<unknown> | Error
     date: Date

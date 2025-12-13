@@ -16,27 +16,26 @@ export class ImprovedAuth {
     private keyDirPath: string
     private cache: NodeCache
     private creds: any
-    logger: ILogger
-    [key: string]: any
+    private logger = new Logger()
+    private timers: Record<string, any> = {}
 
     constructor(baseDir: `./${string}` = './auth') {
-        this.logger = new Logger()
         this.baseDir = baseDir
         this.credsPath = path.join(this.baseDir, 'creds.json')
         this.keyDirPath = path.join(this.baseDir, 'keys')
 
         fs.mkdirSync(this.keyDirPath, { recursive: true })
         this.cache = new NodeCache({ stdTTL: 1800, checkperiod: 600, useClones: false })
-        this.creds = this.#loadAuth(this.credsPath) || initAuthCreds()
+        this.creds = this.loadAuth(this.credsPath) || initAuthCreds()
     }
 
     get keysDir() { return this.keyDirPath }
 
-    #sanitizeFileName(name: string) {
+    private sanitizeFileName(name: string) {
         return name.replace(/[:<>"/\\|?*]/g, '_')
     }
 
-    #loadAuth(file: string) {
+    private loadAuth(file: string) {
         try {
             if (fs.existsSync(file)) {
                 return JSON.parse(fs.readFileSync(file, 'utf-8'), BufferJSON.reviver)
@@ -47,19 +46,19 @@ export class ImprovedAuth {
         return null
     }
 
-    #loadJSON(file: string) {
+    private loadJSON(file: string) {
         return JSON.parse(fs.readFileSync(file, 'utf-8'))
     }
 
-    #saveJSON(file: string, data: any) {
+    private saveJSON(file: string, data: any) {
         fs.mkdirSync(path.dirname(file), { recursive: true })
         fs.writeFileSync(file + '.tmp', JSON.stringify(data, null, 2))
         fs.renameSync(file + '.tmp', file)
     }
 
-    #saveAuth(file: string, data: any) {
+    private saveAuth(file: string, data: any) {
         try {
-            const baseName = this.#sanitizeFileName(path.basename(file))
+            const baseName = this.sanitizeFileName(path.basename(file))
             const safeFile = path.join(path.dirname(file), baseName)
             fs.writeFileSync(safeFile + '.tmp', JSON.stringify(data, BufferJSON.replacer, 2))
             fs.renameSync(safeFile + '.tmp', safeFile)
@@ -67,13 +66,13 @@ export class ImprovedAuth {
             this.logger.log('[Auth] Failed to save file', 'error')
         }
     }
-    #deleteFile(file: string) {
+    private deleteFile(file: string) {
         try { if (fs.existsSync(file)) fs.unlinkSync(file) } catch { }
     }
-    #isNullLike(v: any) {
+    private isNullLike(v: any) {
         return v === null || v === undefined
     }
-    saveCreds = () => this.#saveAuth(this.credsPath, this.creds)
+    saveCreds = () => this.saveAuth(this.credsPath, this.creds)
 
     keys: AuthenticationState['keys'] = {
         get: async <T extends keyof SignalDataTypeMap>(type: T, ids: string[]) => {
@@ -85,7 +84,7 @@ export class ImprovedAuth {
 
                 const file = path.join(this.keysDir, `${safeKey}.json`)
                 if (!value && fs.existsSync(file)) {
-                    try { value = this.#loadJSON(file) as SignalDataTypeMap[T] } catch { /* ignore */ }
+                    try { value = this.loadJSON(file) as SignalDataTypeMap[T] } catch { /* ignore */ }
                     if (value) this.cache.set(safeKey, value)
                 }
 
@@ -108,19 +107,19 @@ export class ImprovedAuth {
                     const safeKey = `${String(type)}-${id}`.replace(/[:<>"/\\|?*]/g, '_')
                     const file = path.join(this.keysDir, `${safeKey}.json`)
 
-                    if (this.#isNullLike(value)) {
+                    if (this.isNullLike(value)) {
                         this.cache.del(safeKey)
-                        this.#deleteFile(file)
+                        this.deleteFile(file)
                         continue
                     }
 
                     this.cache.set(safeKey, value)
 
                     const timerKey = `_save_${safeKey}`
-                    clearTimeout(this[timerKey])
-                    this[timerKey] = setTimeout(() => {
+                    clearTimeout(this.timers[timerKey])
+                    this.timers[timerKey] = setTimeout(() => {
                         try {
-                            this.#saveJSON(file, value)
+                            this.saveJSON(file, value)
                         } catch (e) {
                             this.logger.log(`[Auth] Failed to save key ${safeKey}`, 'error')
                         }
