@@ -39,14 +39,16 @@ export class MessageParse {
             : null
         const prefix = await this.config.getConfig("prefix")
         const body = text ?? caption ?? ""
-        let commandContent = null
+        let commandContent: null | { commandType: "regular" | "mediaDownload"; cmd: string; args: string[] } = null
         if (body.startsWith(prefix)) {
-            const commandType = text ? "regular" : "mediaDownload"
+            const commandType: "regular" | "mediaDownload" = text ? "regular" : "mediaDownload"
 
-            const [cmd, ...args] = body
+            const parts = body
                 .slice(prefix.length)
                 .trim()
                 .split(/\s+/)
+            const cmd = parts.shift() ?? ""
+            const args = parts
             commandContent = {
                 commandType,
                 cmd,
@@ -127,7 +129,7 @@ interface IKeyFetch {
     key: WAMessageKey,
 }
 
-interface IMessageFetch extends IKeyFetch {
+export interface IMessageFetch extends IKeyFetch {
     pushName: string | null | undefined,
     messageTimestamp: number | Long | null | undefined,
     type: string,
@@ -141,7 +143,7 @@ interface IMessageFetch extends IKeyFetch {
     raw: WAMessage,
     rawQuoted?: proto.IMessage | null,
     commandContent: null | {
-        commandType: string,
+        commandType:  "regular" | "mediaDownload",
         cmd: string,
         args: Array<string>,
     }

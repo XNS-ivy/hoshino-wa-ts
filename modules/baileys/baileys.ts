@@ -8,15 +8,17 @@ import systemConfig from '@configs/system.json'
 import QRcode from 'qrcode'
 import type { Boom } from '@hapi/boom'
 import fs from 'fs'
-import { MessageParse, type IMessageParse } from './handlers/message-parse'
+import { MessageParse } from './handlers/message-parse'
+import command from './handlers/command-handling'
 
 export default class Socket {
     public sock: WASocket | null
     private logger: ILogger
     private parseChat: MessageParse
-    authPath: string | null
-    auth: ImprovedAuth | null
-    saveCreds: () => void
+    private command = command
+    private authPath: string | null
+    private auth: ImprovedAuth | null
+    private saveCreds: () => void
 
     constructor() {
         this.sock = null
@@ -56,7 +58,7 @@ export default class Socket {
     async #socketEvents() {
         if (!this.sock) return
         this.sock.ev.on('creds.update', () => {
-            this.logger.log('[Event] Saving Creds', 'system')
+            this.logger.log('[Creds] Saving Creds', 'system')
             this.saveCreds()
         })
         this.sock.ev.on('connection.update', async (connections) => {
@@ -78,9 +80,10 @@ export default class Socket {
                 }
             }
             if(messageOutput != null) {
-                this.logger.log(`[Event] Got New ${messageOutput.notifyType} Message`, 'info')
-                if (messageOutput.commandContent != null ){
-                    this.logger.log(`[Event] Executing Cooamnd: ${messageOutput.commandContent.cmd}`, 'info')
+                this.logger.log(`[Message] Got New ${messageOutput.notifyType} Message`, 'info')
+                if (messageOutput.commandContent != null && this.sock != null){
+                    this.logger.log(`[Command] Executing Cooamnd: ${messageOutput.commandContent.cmd}`, 'system')
+                    this.command.execute(messageOutput, this.sock)
                 }
             }
         })
