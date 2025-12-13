@@ -31,7 +31,8 @@
     "paths": {
       "@baileys/*": ["./modules/baileys/*"],
       "@logger/*": ["./modules/log/*"],
-      "@configs/*": ["./configs/*"]
+      "@configs/*": ["./configs/*"],
+      "@schemas/*": ["./schemas/*"],
     }
   }
 }

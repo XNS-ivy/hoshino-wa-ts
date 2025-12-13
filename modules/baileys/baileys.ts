@@ -70,16 +70,19 @@ export default class Socket {
             let messageOutput = null
             if (type == 'notify') {
                 for (const message of messages) {
-                    this.logger.log('[Event] Got New Notify Message', 'info')
-                    messageOutput = await this.parseChat.fetch(message)
+                    messageOutput = await this.parseChat.fetch(message, type)
                 }
             } if (type == 'append') {
                 for (const message of messages) {
-                    this.logger.log('[Event] Got New Appended Message', 'info')
-                    messageOutput = await this.parseChat.fetch(message)
+                    messageOutput = await this.parseChat.fetch(message, type)
                 }
             }
-            // if(messageOutput != null) console.log(messageOutput)
+            if(messageOutput != null) {
+                this.logger.log(`[Event] Got New ${messageOutput.notifyType} Message`, 'info')
+                if (messageOutput.commandContent != null ){
+                    this.logger.log(`[Event] Executing Cooamnd: ${messageOutput.commandContent.cmd}`, 'info')
+                }
+            }
         })
     }
     // ------ 

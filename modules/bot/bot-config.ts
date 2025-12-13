@@ -1,24 +1,27 @@
 import path from "path"
 import fs from "fs/promises"
 import { watch } from "fs"
+import configSchema from "@schemas/bot-configs-schema"
+import { fileURLToPath } from "url"
 
-const configSchema = {
-    prefix: "!" as string,
-    botName: "Takanashi Hoshino" as string,
-}
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
-export class BotConfigs {
-    private configPath = path.resolve("../../configs/bot.json")
+class BotConfigs {
+    private configPath = path.resolve(__dirname, "../../configs/bot.json")
     private config: Record<string, any> | null = null
     private watching = false
-
-    constructor() {}
+    private initialized = false
 
     async init() {
+        if (this.initialized) return
+        this.initialized = true
+
         await this.load()
         await this.sanitize()
         this.watchFile()
     }
+
     private async load() {
         const file = await Bun.file(this.configPath).json()
         this.config = file
@@ -35,12 +38,14 @@ export class BotConfigs {
                 updated = true
             }
         }
+
         for (const key in this.config) {
             if (!(key in configSchema)) {
                 delete this.config[key]
                 updated = true
             }
         }
+
         if (updated) {
             await fs.writeFile(
                 this.configPath,
@@ -48,6 +53,7 @@ export class BotConfigs {
             )
         }
     }
+
     private watchFile() {
         if (this.watching) return
         this.watching = true
@@ -59,10 +65,16 @@ export class BotConfigs {
             }
         })
     }
-    getConfig(key?: TypeKeyConfigs) {
-        if (!this.config) throw new Error("Config has not been initialized.")
+
+    async getConfig<K extends TypeKeyConfigs>(key: K): Promise<TypeValue<K>>
+    async getConfig(): Promise<typeof configSchema>
+    async getConfig(key?: TypeKeyConfigs) {
+        if (!this.config) {
+            throw new Error("Config has not been initialized. Call init() first.")
+        }
         return key ? this.config[key] : this.config
     }
+
     async changeConfig<K extends TypeKeyConfigs>(key: K, value: TypeValue<K>) {
         if (!this.config) throw new Error("Config has not been initialized.")
         if (!(key in configSchema)) {
@@ -77,6 +89,9 @@ export class BotConfigs {
         )
     }
 }
+
+const botConfigs = new BotConfigs()
+export default botConfigs
 
 type TypeKeyConfigs = keyof typeof configSchema
 type TypeValue<T extends TypeKeyConfigs> = typeof configSchema[T]

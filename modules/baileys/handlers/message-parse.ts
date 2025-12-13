@@ -1,4 +1,6 @@
 import type { WAMessage, proto, WAMessageKey } from "baileys"
+import Config from "modules/bot/bot-config"
+
 
 export class MessageParse {
     static denied: (keyof proto.IMessage)[] = [
@@ -6,8 +8,9 @@ export class MessageParse {
         "senderKeyDistributionMessage",
         "messageContextInfo",
     ]
+    private config = Config
 
-    async fetch(msg: WAMessage): Promise<IMessageFetch | null> {
+    async fetch(msg: WAMessage, notifyType: string): Promise<IMessageFetch | null> {
         const { key, pushName, message, messageTimestamp } = msg
         const { remoteJid } = key
         const lid = this.getLID(key)
@@ -34,13 +37,20 @@ export class MessageParse {
         const quoted = quotedMessage
             ? await this.quotedMessageFetch(quotedMessage)
             : null
-        if (text || caption) {
-            const commandType = text ? 'regular' : 'mediaDownload'
-            const cmd = text.startsWith()
-            const command = {
-                cmd: '',
-                args: [],
-                type: commandType,
+        const prefix = await this.config.getConfig("prefix")
+        const body = text ?? caption ?? ""
+        let commandContent = null
+        if (body.startsWith(prefix)) {
+            const commandType = text ? "regular" : "mediaDownload"
+
+            const [cmd, ...args] = body
+                .slice(prefix.length)
+                .trim()
+                .split(/\s+/)
+            commandContent = {
+                commandType,
+                cmd,
+                args
             }
         }
         return {
@@ -58,6 +68,8 @@ export class MessageParse {
             quoted,
             raw: msg,
             rawQuoted: quotedMessage ?? null,
+            commandContent,
+            notifyType,
         }
     }
 
@@ -128,6 +140,12 @@ interface IMessageFetch extends IKeyFetch {
     quoted: IQuotedMessage | null,
     raw: WAMessage,
     rawQuoted?: proto.IMessage | null,
+    commandContent: null | {
+        commandType: string,
+        cmd: string,
+        args: Array<string>,
+    }
+    notifyType: string,
 }
 
 interface IQuotedMessage {

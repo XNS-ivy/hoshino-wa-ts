@@ -1,3 +1,7 @@
 import Socket from '@baileys/baileys'
+import Config from 'modules/bot/bot-config'
 const bot = new Socket
-bot.init('./auth')
+const config = Config
+
+await config.init()
+await bot.init('./auth')
