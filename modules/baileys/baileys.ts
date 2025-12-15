@@ -1,8 +1,7 @@
-import { makeWASocket } from 'baileys'
+import { makeWASocket, Browsers } from 'baileys'
 import { ImprovedAuth } from './handlers/auth-state'
 import { Logger } from '@logger/logger'
 import { type WASocket, DisconnectReason } from 'baileys'
-import type { ILogger } from '@logger/logger'
 import pino from 'pino'
 import systemConfig from '@configs/system.json'
 import QRcode from 'qrcode'
@@ -47,9 +46,12 @@ export default class Socket {
             auth: state,
             printQRInTerminal: false,
             markOnlineOnConnect: false,
-            logger: pino({ level: systemConfig.BAILEYS_LOG_LEVEL })
+            logger: pino({ level: systemConfig.BAILEYS_LOG_LEVEL }),
+            generateHighQualityLinkPreview: true,
+            qrTimeout: 18000,
+            browser: Browsers.appropriate('Google Chrome'),
         })
-
+        // Next Update Need To Handle Group Cache So It Will Not Be Getting Banned By MarkZuckerberg
         return { sock, saveCreds }
     }
 

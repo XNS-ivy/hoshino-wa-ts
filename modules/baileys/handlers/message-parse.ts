@@ -55,6 +55,7 @@ export class MessageParse {
                 args
             }
         }
+        if (!lid) return null
         return {
             remoteJid,
             lid,
@@ -124,8 +125,8 @@ export interface IMessageParse {
 }
 
 interface IKeyFetch {
-    remoteJid: string | null | undefined,
-    lid: string | null,
+    remoteJid: string,
+    lid: string,
     key: WAMessageKey,
 }
 
@@ -143,7 +144,7 @@ export interface IMessageFetch extends IKeyFetch {
     raw: WAMessage,
     rawQuoted?: proto.IMessage | null,
     commandContent: null | {
-        commandType:  "regular" | "mediaDownload",
+        commandType: "regular" | "mediaDownload",
         cmd: string,
         args: Array<string>,
     }

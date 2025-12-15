@@ -19,16 +19,18 @@ export class CommandHandling {
     }
     async execute(msg: IMessageFetch, socket: WASocket): Promise<void> {
         const { commandContent } = msg
-        if (!commandContent || !msg.remoteJid) return
+        if (!commandContent) return
 
         const { cmd, args } = commandContent
         const command = this.commands.get(cmd)
 
         if (!command) return
-
-        await command.execute(cmd, args, {
+        // On here next update will be add info who is command user so it can be easy enough to 
+        // handle commands for comand access level like admin group member or bot owner
+        
+        await command.execute(args, {
             msg,
-            socket
+            socket,
         })
 
         this.logger.log(`[Commands] ${cmd} executed`, 'success')
@@ -62,15 +64,15 @@ export class CommandHandling {
 export interface ICommand {
     name: string
     execute: (
-        command: string,
         args: string[] | null | undefined,
-        ctx: {
-            msg: IMessageFetch
-            socket: WASocket
-        }
+        ctx: ICTX,
     ) => Promise<void> | void
 }
 
+export interface ICTX {
+    msg: IMessageFetch,
+    socket: WASocket,
+}
 
 const command = new CommandHandling
 export default command
