@@ -3,7 +3,7 @@ import fs from 'fs'
 import { initAuthCreds, BufferJSON } from 'baileys'
 import NodeCache from 'node-cache'
 import { Logger } from '@logger/logger'
-import type { ILogger } from '@logger/logger'
+
 import type {
     AuthenticationState,
     SignalDataTypeMap,

@@ -37,12 +37,11 @@ export class MessageParse {
         const quoted = quotedMessage
             ? await this.quotedMessageFetch(quotedMessage)
             : null
+        const isOnGroup = remoteJid.endsWith('@g.us') ? true : false
         const prefix = await this.config.getConfig("prefix")
         const body = text ?? caption ?? ""
-        let commandContent: null | { commandType: "regular" | "mediaDownload"; cmd: string; args: string[] } = null
+        let commandContent: null | { cmd: string; args: string[] } = null
         if (body.startsWith(prefix)) {
-            const commandType: "regular" | "mediaDownload" = text ? "regular" : "mediaDownload"
-
             const parts = body
                 .slice(prefix.length)
                 .trim()
@@ -50,7 +49,6 @@ export class MessageParse {
             const cmd = parts.shift() ?? ""
             const args = parts
             commandContent = {
-                commandType,
                 cmd,
                 args
             }
@@ -61,6 +59,7 @@ export class MessageParse {
             lid,
             key,
             pushName,
+            isOnGroup,
             messageTimestamp,
             type: messageObject,
             text,
@@ -132,6 +131,7 @@ interface IKeyFetch {
 
 export interface IMessageFetch extends IKeyFetch {
     pushName: string | null | undefined,
+    isOnGroup: boolean
     messageTimestamp: number | Long | null | undefined,
     type: string,
     messageObject?: string,
@@ -144,7 +144,6 @@ export interface IMessageFetch extends IKeyFetch {
     raw: WAMessage,
     rawQuoted?: proto.IMessage | null,
     commandContent: null | {
-        commandType: "regular" | "mediaDownload",
         cmd: string,
         args: Array<string>,
     }

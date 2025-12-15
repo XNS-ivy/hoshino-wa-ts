@@ -20,17 +20,20 @@ export class CommandHandling {
     async execute(msg: IMessageFetch, socket: WASocket): Promise<void> {
         const { commandContent } = msg
         if (!commandContent) return
+        let whoAMI: 'private' | 'admin' | 'member' = 'private'
+        if (msg.isOnGroup) {
+            const user = (await socket.groupMetadata(msg.remoteJid)).participants.find(p => p.id === msg.lid)
+            const role: 'admin' | 'member' = user?.admin ? 'admin' : 'member'
+            whoAMI = role
+        }
 
         const { cmd, args } = commandContent
         const command = this.commands.get(cmd)
-
         if (!command) return
-        // On here next update will be add info who is command user so it can be easy enough to 
-        // handle commands for comand access level like admin group member or bot owner
-        
         await command.execute(args, {
             msg,
             socket,
+            whoAMI,
         })
 
         this.logger.log(`[Commands] ${cmd} executed`, 'success')
@@ -46,7 +49,7 @@ export class CommandHandling {
                 continue
             }
 
-            if (!file.name.endsWith('.ts') && !file.name.endsWith('.js')) continue
+            if ((!file.name.endsWith('.ts') && !file.name.endsWith('.js')) || file.name === 'example.ts') continue
 
             const module = await import(fullPath)
             const command = module.default as ICommand
@@ -72,6 +75,7 @@ export interface ICommand {
 export interface ICTX {
     msg: IMessageFetch,
     socket: WASocket,
+    whoAMI: 'private' | 'admin' | 'member',
 }
 
 const command = new CommandHandling

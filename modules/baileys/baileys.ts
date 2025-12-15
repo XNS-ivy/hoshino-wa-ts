@@ -9,6 +9,7 @@ import type { Boom } from '@hapi/boom'
 import fs from 'fs'
 import { MessageParse } from './handlers/message-parse'
 import command from './handlers/command-handling'
+import NodeCache from 'node-cache'
 
 export default class Socket {
     private sock: WASocket | null
@@ -17,6 +18,7 @@ export default class Socket {
     private command = command
     private authPath: string | null
     private auth: ImprovedAuth | null
+    private groupCache = new NodeCache({ stdTTL: 5 * 60, useClones: false })
     private saveCreds: () => void
 
     constructor() {
@@ -50,6 +52,7 @@ export default class Socket {
             generateHighQualityLinkPreview: true,
             qrTimeout: 18000,
             browser: Browsers.appropriate('Google Chrome'),
+            cachedGroupMetadata: async (jid) => { return this.groupCache.get(jid) as any }
         })
         // Next Update Need To Handle Group Cache So It Will Not Be Getting Banned By MarkZuckerberg
         return { sock, saveCreds }
@@ -81,11 +84,28 @@ export default class Socket {
             }
             if (messageOutput != null) {
                 this.logger.log(`[Message] Got New ${messageOutput.notifyType} Message`, 'info')
+                // console.log(messageOutput)
                 if (messageOutput.commandContent != null && this.sock != null) {
                     this.logger.log(`[Commands] Executing Cooamnd: ${messageOutput.commandContent.cmd}`, 'system')
                     this.command.execute(messageOutput, this.sock)
                 }
             }
+        })
+        this.sock.ev.on('groups.update', async (updates) => {
+            if (!updates || updates.length === 0 || !this.sock) return
+            const events = updates[0]
+            if (!events || !events.id) return
+            try {
+                const metadata = await this.sock.groupMetadata(events.id)
+                this.groupCache.set(events.id, metadata)
+            } catch (err) {
+                this.logger.log(`[Groups] Failed to fetch metadata for ${events.id}: ${err}`, 'error')
+            }
+        })
+        this.sock.ev.on('group-participants.update', async (updates) => {
+            if (!updates || !this.sock) return
+            const metadata = await this.sock.groupMetadata(updates.id)
+            this.groupCache.set(updates.id, metadata)
         })
     }
     // ------ 
