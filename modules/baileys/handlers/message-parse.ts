@@ -11,10 +11,10 @@ export class MessageParse {
     private config = Config
 
     async fetch(msg: WAMessage, notifyType: string): Promise<IMessageFetch | null> {
-        const { key, pushName, message, messageTimestamp } = msg
+        const { key, pushName, message } = msg
         const { remoteJid } = key
         const lid = this.getLID(key)
-
+        const messageTimestamp = Date.now()
         if (!message || !pushName) return null
         if (remoteJid === "status@broadcast" || !remoteJid) return null
 
@@ -132,7 +132,7 @@ interface IKeyFetch {
 export interface IMessageFetch extends IKeyFetch {
     pushName: string | null | undefined,
     isOnGroup: boolean
-    messageTimestamp: number | Long | null | undefined,
+    messageTimestamp: number,
     type: string,
     messageObject?: string,
     text: string | null | undefined,
