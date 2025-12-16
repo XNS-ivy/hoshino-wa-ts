@@ -2,7 +2,7 @@ import path from 'path'
 import fs from 'fs'
 import { initAuthCreds, BufferJSON } from 'baileys'
 import NodeCache from 'node-cache'
-import { Logger } from '@logger/logger'
+import logger from '@logger/logger'
 
 import type {
     AuthenticationState,
@@ -16,7 +16,7 @@ export class ImprovedAuth {
     private keyDirPath: string
     private cache: NodeCache
     private creds: any
-    private logger = new Logger()
+    private logger = logger
     private timers: Record<string, any> = {}
 
     constructor(baseDir: `./${string}` = './auth') {

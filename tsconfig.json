@@ -33,6 +33,8 @@
       "@logger/*": ["./modules/log/*"],
       "@configs/*": ["./configs/*"],
       "@schemas/*": ["./schemas/*"],
+      "@bot/*": ["./modules/bot/*"],
+      "@functions/*": ["./modules/functions/*"],
     }
   }
 }

@@ -1,5 +1,5 @@
 import type { WAMessage, proto, WAMessageKey } from "baileys"
-import Config from "modules/bot/bot-config"
+import Config from "@bot/bot-config"
 
 
 export class MessageParse {

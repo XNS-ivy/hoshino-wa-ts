@@ -1,6 +1,6 @@
 import { type IMessageFetch } from './message-parse'
 import { type WASocket } from 'baileys'
-import { Logger } from '@logger/logger'
+import logger from '@logger/logger'
 import path from 'path'
 import fs from 'fs/promises'
 import { fileURLToPath } from 'url'
@@ -11,7 +11,7 @@ const __dirname = path.dirname(__filename)
 export class CommandHandling {
     private commandPath = path.resolve(__dirname, "../../../commands/")
     private commands = new Map<string, ICommand>()
-    private logger = new Logger
+    private logger = logger
     constructor() { }
     async init() {
         await this.loadCommands(this.commandPath)
@@ -20,11 +20,15 @@ export class CommandHandling {
     async execute(msg: IMessageFetch, socket: WASocket): Promise<void> {
         const { commandContent } = msg
         if (!commandContent) return
-        let whoAMI: 'private' | 'admin' | 'member' = 'private'
+        let whoAMI: {
+            role: 'private' | 'admin' | 'member'
+        } = { role: 'private' }
         if (msg.isOnGroup) {
             const user = (await socket.groupMetadata(msg.remoteJid)).participants.find(p => p.id === msg.lid)
             const role: 'admin' | 'member' = user?.admin ? 'admin' : 'member'
-            whoAMI = role
+            whoAMI = {
+                role: role
+            }
         }
 
         const { cmd, args } = commandContent
@@ -75,7 +79,9 @@ export interface ICommand {
 export interface ICTX {
     msg: IMessageFetch,
     socket: WASocket,
-    whoAMI: 'private' | 'admin' | 'member',
+    whoAMI: {
+        role: 'private' | 'admin' | 'member'
+    },
 }
 
 const command = new CommandHandling

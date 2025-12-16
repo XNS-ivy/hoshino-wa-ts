@@ -1,6 +1,6 @@
 import { makeWASocket, Browsers } from 'baileys'
 import { ImprovedAuth } from './handlers/auth-state'
-import { Logger } from '@logger/logger'
+import logger from '@logger/logger'
 import { type WASocket, DisconnectReason } from 'baileys'
 import pino from 'pino'
 import systemConfig from '@configs/system.json'
@@ -13,7 +13,7 @@ import NodeCache from 'node-cache'
 
 export default class Socket {
     private sock: WASocket | null
-    private logger = new Logger
+    private logger = logger
     private parseChat = new MessageParse()
     private command = command
     private authPath: string | null

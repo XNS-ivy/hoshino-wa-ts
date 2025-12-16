@@ -1,7 +1,7 @@
 import colors from 'colors'
 import systemConfig from '@configs/system.json'
 
-export class Logger {
+class Logger {
     private botLogLevel: IBotLogLevel
 
     constructor() {
@@ -74,3 +74,6 @@ type IBotLogLevel = 'silent' | 'info' | 'debug' | string
 export interface ILogger {
     log(msg: string, level: ILevel): void | null
 }
+
+const logger = new Logger()
+export default logger

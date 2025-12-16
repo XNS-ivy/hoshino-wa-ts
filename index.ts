@@ -1,10 +1,11 @@
 import Socket from '@baileys/baileys'
-import Config from 'modules/bot/bot-config'
+import config from '@bot/bot-config'
 import command from '@baileys/handlers/command-handling'
+import premium from '@bot/premium'
 
 const bot = new Socket
-const config = Config
 
+await premium.init()
 await command.init()
 await config.init()
 await bot.init('./auth')
